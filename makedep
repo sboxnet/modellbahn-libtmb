@@ -1,0 +1,36 @@
+#!/bin/bash
+
+exitwithusage()
+{
+    echo "usage: makedep [-objdir path] [-gccopts|-gxxopts gccoptions] file1 file2..." >&2
+    exit 1
+}
+
+
+# read options
+objdir=""
+gccopts=""
+
+gname="gcc"
+
+while true
+do
+	case "$1" in
+		-objdir)	objdir="$2"; shift 2 ;;
+		-gxxopts)	gccopts="$2"; shift 2; gname="g++" ;;
+		-gccopts)	gccopts="$2"; shift 2 ;;
+		-*)			exitwithusage ;;
+		*)			break ;;
+	esac
+done
+(( $# == 0 )) && exitwithusage
+
+[[ -z "$objdir" ]] && objdir="."
+
+for infile in "$@"
+do
+    ofile="${objdir}/$(echo "$infile" | sed 's/\.[a-zA-Z]*$/\.o/' )"
+    $gname -MM "$infile" -MT "$ofile"  $gccopts || exit 1
+done
+
+exit 0
